@@ -1,4 +1,4 @@
-# Prediction interface for Cog ⚙️
+# Prediction interface for Cog
 # https://cog.run/python
 
 import os

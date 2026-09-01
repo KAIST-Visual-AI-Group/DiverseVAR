@@ -426,7 +426,7 @@ class BSQ(Module):
         inv_temperature = 100.0,
         gamma0=1.0, gamma=1.0, zeta=1.0,
         preserve_norm = False, # whether to preserve the original norm info
-        new_quant = True, # new quant function，
+        new_quant = True, # new quant function
         mask_out = False, # mask the output as 0 in some conditions
         use_out_phi = False, # use output phi network
         use_out_phi_res = False, # residual out phi

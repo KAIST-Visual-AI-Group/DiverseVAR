@@ -20,6 +20,7 @@ stable-diffusion-v1-4/
 *.ckpt
 *.log
 *.txt
+!requirements.txt
 *.ipynb
 toscli
 *.hydra

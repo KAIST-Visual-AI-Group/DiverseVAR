@@ -45,7 +45,7 @@ temporal-stage variants.
 
 ## VBench evaluation
 
-VBench is intentionally not vendored in this release. Install it separately and generate its inputs with:
+VBench is not included in this repository. Install it separately and generate its inputs with:
 
 ```bash
 python tools/infer_vbench2_480p.py \
@@ -66,8 +66,7 @@ expected to fit on a single 24 GB GPU without additional offloading.
 
 ## Training
 
-Training and fine-tuning are out of scope for this release: DiverseVAR is training-free and this
-directory ships inference code only. For the training and data-preparation pipeline, use the
-upstream [InfinityStar](https://github.com/FoundationVision/InfinityStar) repository.
+This release contains inference and evaluation code only. For training and dataset preparation,
+use the upstream [InfinityStar](https://github.com/FoundationVision/InfinityStar) repository.
 
 The original InfinityStar license is retained in `LICENSE`.

@@ -18,7 +18,7 @@ local_output*
 *.ckpt
 *.log
 *.txt
-!examples/*.txt
+!requirements.txt
 *.ipynb
 # Local release artifacts
 outputs/

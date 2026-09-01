@@ -1,0 +1,11 @@
+diffusers==0.31.0
+einops==0.8.0
+huggingface_hub==0.26.2
+image_reward==1.5
+lpips
+scipy==1.14.1
+tensorboard==2.18.0
+transformers==4.36.1
+typed_argument_parser==1.10.1
+vendi-score
+clean-fid==0.1.35

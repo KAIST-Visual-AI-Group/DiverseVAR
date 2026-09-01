@@ -21,10 +21,10 @@ Supported metrics:
 
 Useful flags:
 
-- `--image_exts` — defaults to `auto`, which detects `png`/`jpg`/`jpeg` in the folder.
-- `--fid_dataset` — `ms-coco` or `mjhq-30k`; auto-detected from the prompt-file name in the path.
-- `--scores_path` / `--label` — write the scores elsewhere / tag them for later aggregation.
-- `--overwrite` — recompute metrics that are already in the scores file (runs resume by default).
+- `--image_exts`: defaults to `auto`, which detects `png`, `jpg` or `jpeg` in the folder.
+- `--fid_dataset`: `ms-coco` or `mjhq-30k`, auto-detected from the prompt-file name in the path.
+- `--scores_path` and `--label`: write the scores elsewhere, and tag them for later aggregation.
+- `--overwrite`: recompute metrics that are already in the scores file (runs resume by default).
 
 Metric models are loaded on demand, so only the packages and checkpoints for the metrics you select
 need to be installed. `DIVERSEVAR_SSCD_PATH` must point at the SSCD TorchScript checkpoint for the

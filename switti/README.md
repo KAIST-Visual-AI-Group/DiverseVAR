@@ -2,7 +2,7 @@
 
 This directory adapts [Switti](https://github.com/yandex-research/switti) with condition annealing and scale-travel refinement at inference time. The implementation is integrated into `models/pipeline.py`; schedules and CLI options live in `utils_local/diverse_var_utils.py`.
 
-This release is inference-only: training, fine-tuning and dataset-preparation code is out of scope here, so use the upstream [Switti](https://github.com/yandex-research/switti) repository to train or fine-tune a checkpoint.
+This release contains inference and evaluation code only. For training and dataset preparation, use the upstream [Switti](https://github.com/yandex-research/switti) repository.
 
 ## Setup
 

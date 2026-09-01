@@ -682,12 +682,12 @@ class Infinity(nn.Module):
                 cfg = cfg_list[si]
 
             # [DiverseVAR] CADS: overwrite ONLY the text KV entry ('t0') each scale.
-            # IMPORTANT: do NOT call kv_caching(True) here — that resets cached_k={}
+            # IMPORTANT: do NOT call kv_caching(True) here, because that resets cached_k={}
             # and would destroy visual KV entries from previous scales (KeyError on ref_sids).
             # run_text_forward with scale_ind='t0' overwrites cached_k['t0'] only,
             # leaving all visual KV entries intact.
-            # - noisy scale (ns > 0): inject noise → run_text_forward(noisy_pt)
-            # - first clean scale:    restore clean prefix → run_text_forward(clean)
+            # - noisy scale (ns > 0): inject noise, then run_text_forward(noisy_pt)
+            # - first clean scale:    restore the clean prefix, then run_text_forward(clean)
             # - subsequent clean scales: no action (clean KV already in place)
             if noise_type == 'cads' and scale_travel_repeat == 0:
                 ns = noise_scales[si] if si < len(noise_scales) else 0.0

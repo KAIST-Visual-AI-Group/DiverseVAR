@@ -30,7 +30,7 @@ KAIST
 | [`infinitystar/`](infinitystar/) | text-to-video | [InfinityStar](https://github.com/FoundationVision/InfinityStar) | `infinitystar/tools/infer_video_480p.py` | VBench / VBench-2.0                |
 
 
-Each integration is self-contained: its own Conda environment, requirements, checkpoints, and README.
+Each integration is self-contained, with its own Conda environment, requirements, checkpoint instructions and README.
 
 ## Environment and Requirements
 
@@ -117,19 +117,20 @@ All three integrations read prompts from a text file, one prompt per line. The s
 
 | File | Prompts | Description |
 |---|---|---|
+| `prompts/example-image-prompt.txt` | 1 | Qualitative image prompt used in the commands below |
+| `prompts/example-video-prompt.txt` | 1 | Qualitative video prompt (the motion-aware augmented prompt marked † in Fig. 7) |
 | `prompts/ms-coco-1000-prompts.txt` | 1000 | Captions sampled from the MS-COCO val2014 30K caption set used for FID |
 | `prompts/mjhq-mixed-1000-prompts.txt` | 1000 | Prompts sampled from MJHQ-30K, mixed across its category splits |
 
 Paths below are written relative to the integration directory you `cd` into, so the shared lists are
 reached as `../prompts/<file>`.
 
-> **Note.** Benchmark lists must keep the `<dataset>-<variant>-<count>-prompts.txt` shape. The
-> in-process evaluator (`inference.py --eval 1`) reads the prompt count from the third
-> `-`-separated field of the path, and its FID branch picks the reference set from the first field
-> of the filename (`ms` → MS-COCO, `mjhq` → MJHQ-30K; anything else skips FID). The two
-> `example-*-prompt.txt` files intentionally do not follow that shape — they are for qualitative
-> runs, so do not pass them with `--eval 1`. The standalone `evaluate.py` does not depend on the
-> filename at all; it takes `--fid_dataset` explicitly.
+Benchmark lists must keep the `<dataset>-<variant>-<count>-prompts.txt` naming. The in-process
+evaluator (`inference.py --eval 1`) reads the prompt count from the third `-`-separated field of
+the path, and its FID branch picks the reference set from the first field of the filename (`ms` for
+MS-COCO, `mjhq` for MJHQ-30K; any other name skips FID). The two `example-*-prompt.txt` files do
+not follow that naming because they are meant for qualitative runs, so do not pass them with
+`--eval 1`. The standalone `evaluate.py` does not read the filename; it takes `--fid_dataset`.
 
 ### Infinity
 
@@ -192,16 +193,16 @@ Outputs are written to a nested directory that records every sampling setting, t
 
 
 
-Evaluation backends carry additional dependencies and checkpoints; install only the metrics you
-need. Nothing here is bundled: no metric checkpoint, no FID reference statistics.
+Metric backends bring their own dependencies and checkpoints, so install only the ones you use.
+No metric checkpoint and no FID reference statistics are included in this repository.
 
 ### Metrics
 
 | Metric | Role | Backend | What it computes |
 |---|---|---|---|
-| **LPIPS-MPD** | diversity | [`lpips`](https://github.com/richzhang/PerceptualSimilarity) (`net='alex'`) | Mean pairwise LPIPS distance between all image pairs **within one prompt**, averaged over prompts. Higher = more diverse. Reported as `LPIPS_Mean` / `LPIPS_Std`. |
-| **Vendi** | diversity | [`vendi-score`](https://github.com/vertaix/Vendi-Score) + [SSCD](https://github.com/facebookresearch/sscd-copy-detection) | Per-prompt effective number of dissimilar samples: SSCD embeddings → cosine-similarity matrix → `vendi.score_K`, averaged over prompts. Following CADS, SSCD is the similarity backbone. Also reports `Vendi_MSS`, the mean pairwise cosine similarity. |
-| **ImageReward** | quality | [`image-reward`](https://github.com/THUDM/ImageReward) | Human-preference reward per (prompt, image) pair, averaged over all images. Higher = better perceived quality and alignment. |
+| **LPIPS-MPD** | diversity | [`lpips`](https://github.com/richzhang/PerceptualSimilarity) (`net='alex'`) | Mean pairwise LPIPS distance between all image pairs within one prompt, averaged over prompts. Higher values mean more diverse samples. Reported as `LPIPS_Mean` and `LPIPS_Std`. |
+| **Vendi** | diversity | [`vendi-score`](https://github.com/vertaix/Vendi-Score) + [SSCD](https://github.com/facebookresearch/sscd-copy-detection) | Per-prompt effective number of dissimilar samples. SSCD embeddings give a cosine-similarity matrix, `vendi.score_K` turns it into a score, and the scores are averaged over prompts. As in CADS, SSCD is the similarity backbone. `Vendi_MSS` reports the mean pairwise cosine similarity. |
+| **ImageReward** | quality | [`image-reward`](https://github.com/THUDM/ImageReward) | Human-preference reward for each (prompt, image) pair, averaged over all images. Higher values mean better perceived quality and alignment. |
 | **FID** | quality + diversity | see below | Fréchet distance to a benchmark reference set. |
 | **VBench** | video quality | [VBench](https://github.com/Vchitect/VBench) | Frame-wise and temporal Quality Score for generated videos, computed by the official evaluator. |
 | **VBench-2.0** | video diversity | [VBench-2.0](https://github.com/Vchitect/VBench/tree/master/VBench-2.0) | Inter-sample style and content variation (VGG-19 based) for videos generated from the same prompt. |
@@ -213,12 +214,12 @@ SSCD-based metrics require `DIVERSEVAR_SSCD_PATH` to point to an SSCD TorchScrip
 export DIVERSEVAR_SSCD_PATH=/path/to/sscd_disc_mixup.torchscript.pt
 ```
 
-### Image Naming Convention (required for per-prompt diversity)
+### Image naming convention (required for per-prompt diversity)
 
-LPIPS-MPD and Vendi are **per-prompt** metrics: they sort the image files in a folder
-lexicographically and slice that list into consecutive chunks of `imgs_per_prompt`, treating each
-chunk as the sample set of one prompt. The generated filenames must therefore sort so that all
-images of a prompt are contiguous and prompt order is preserved:
+LPIPS-MPD and Vendi are per-prompt metrics. They sort the image files in a folder
+lexicographically and slice that list into consecutive chunks of `imgs_per_prompt`, and each chunk
+is treated as the sample set of one prompt. The filenames must therefore sort so that all images of
+a prompt are contiguous and the prompt order is preserved:
 
 ```
 <save_path>/
@@ -231,16 +232,16 @@ images of a prompt are contiguous and prompt order is preserved:
   metadata.json
 ```
 
-i.e. `{prompt_idx:05d}_{sample_idx:02d}.{ext}` — exactly what `inference.py --save_indv 1` writes,
-with the same keys mirrored in `metadata.json` under `images`. Keep the zero padding: `10_0.png`
-would sort before `2_0.png` and silently mix prompts. `evaluate.py` recovers
-`(prompt_num, imgs_per_prompt)` from those metadata keys and fails loudly if the count differs
-across prompts, so every prompt must have the same number of samples. Flat folders only — one
-directory per configuration, no nesting. Prompt text is read from `metadata.json`, so quality and
-alignment metrics require it to sit next to the images.
+The pattern is `{prompt_idx:05d}_{sample_idx:02d}.{ext}`, which is what `inference.py --save_indv 1`
+writes, and the same keys appear in `metadata.json` under `images`. Keep the zero padding, since
+`10_0.png` would sort before `2_0.png` and silently mix prompts. `evaluate.py` recovers
+`(prompt_num, imgs_per_prompt)` from those metadata keys and raises an error if the count differs
+across prompts, so every prompt must have the same number of samples. Use one flat directory per
+configuration, without nesting. Prompt text is read from `metadata.json`, so the quality and
+alignment metrics need it next to the images.
 
-In the paper we use 100 prompts × 10 images for the Pareto fronts (Fig. 6) and 1000 prompts ×
-10 images for Tab. 1.
+The paper uses 100 prompts with 10 images each for the Pareto fronts (Fig. 6), and 1000 prompts
+with 10 images each for Tab. 1.
 
 ### FID
 
@@ -249,8 +250,8 @@ save path):
 
 | Benchmark | Package | Reference set | Notes |
 |---|---|---|---|
-| MS-COCO | [`T2IBenchmark`](https://github.com/boomb0om/text2image-benchmark) (`calculate_fid` + `get_coco_fid_stats`) | Precomputed InceptionV3 statistics over the **MS-COCO val2014 30K** split (`MS-COCO_val2014_fid_stats.npz`, downloaded and cached automatically on first use) | Generated images are compared directly against those stats; nothing to prepare manually. Prompts come from the same 30K caption pool as `ms-coco-1000-prompts.txt`. |
-| MJHQ-30K | [`clean-fid`](https://github.com/GaParmar/clean-fid) (`fid.compute_fid(..., mode="clean", dataset_split="custom")`) | **Custom** statistics you build once from the 30 000 reference images of [MJHQ-30K](https://huggingface.co/datasets/playgroundai/MJHQ-30K) | clean-fid resizing (`mode="clean"`) avoids the resizing artifacts of legacy FID implementations. |
+| MS-COCO | [`T2IBenchmark`](https://github.com/boomb0om/text2image-benchmark) (`calculate_fid` + `get_coco_fid_stats`) | Precomputed InceptionV3 statistics over the MS-COCO val2014 30K split (`MS-COCO_val2014_fid_stats.npz`, downloaded and cached on first use) | Generated images are compared directly against those statistics, so nothing has to be prepared manually. The prompts come from the same 30K caption pool as `ms-coco-1000-prompts.txt`. |
+| MJHQ-30K | [`clean-fid`](https://github.com/GaParmar/clean-fid) (`fid.compute_fid(..., mode="clean", dataset_split="custom")`) | Custom statistics that you build once from the 30,000 reference images of [MJHQ-30K](https://huggingface.co/datasets/playgroundai/MJHQ-30K) | The clean-fid resizing path (`mode="clean"`) avoids the resizing artifacts of legacy FID implementations. |
 
 Build the MJHQ-30K reference statistics once, under the exact name the evaluator looks up
 (`dataset_name="mjhq-30k"`, `dataset_split="custom"`):
@@ -261,16 +262,16 @@ from cleanfid import fid
 fid.make_custom_stats("mjhq-30k", "<mjhq-ref-dir>", mode="clean")
 ```
 
-FID is computed over the **whole** generation folder (all prompts × all samples), unlike the
-per-prompt diversity metrics, so it captures quality and diversity jointly. Use the 1000-prompt
-lists for it; a handful of prompts gives a meaningless FID.
+FID is computed over the whole generation folder (all prompts and all samples), unlike the
+per-prompt diversity metrics, so it captures quality and diversity together. Use the 1000-prompt
+lists for it, since a handful of prompts gives a meaningless FID.
 
-### Running the Evaluator — Infinity and Switti
+### Running the evaluator (Infinity and Switti)
 
-Both image integrations ship the **same** `evaluate.py` and `evaluation/eval_metrics.py` (identical
+Both image integrations ship the same `evaluate.py` and `evaluation/eval_metrics.py` (identical
 files, one copy per self-contained integration), so the command, the flags and the `scores.json`
-schema are identical; only the Conda environment differs. The evaluator reads `metadata.json`,
-derives `prompt_num` / `imgs_per_prompt` from it, and writes `scores.json` next to the images —
+schema are the same and only the Conda environment differs. The evaluator reads `metadata.json`,
+derives `prompt_num` and `imgs_per_prompt` from it, and writes `scores.json` next to the images.
 `metadata.json` is never modified.
 
 ```bash
@@ -282,22 +283,22 @@ python evaluate.py --save_path <generated-image-directory> \
 | Flag | Effect |
 |---|---|
 | `--metrics` | Comma-separated subset of `LPIPS`, `Vendi`, `ImageReward`, `FID`. |
-| `--image_exts` | `auto` by default — detects `png` (Infinity) or `jpg` (Switti). |
+| `--image_exts` | `auto` by default, which detects `png` (Infinity) or `jpg` (Switti). |
 | `--fid_dataset` | `ms-coco` or `mjhq-30k`; auto-detected from the prompt-file name in the path. |
 | `--scores_path` | Write the scores elsewhere; defaults to `<save_path>/scores.json`. |
 | `--label` | Optional tag stored in `scores.json` for downstream aggregation. |
 | `--overwrite` | Recompute metrics already present; without it a run resumes. |
 
-The same code path runs in-process right after generation with `inference.py --eval 1`
-(`--eval_metrics` selects what is computed), so an interactive run and a post-hoc scoring pass
+The same code path runs in-process right after generation with `inference.py --eval 1`, where
+`--eval_metrics` selects what is computed, so an interactive run and a post-hoc scoring pass
 produce identical score files.
 
 
 
-### Running the Evaluator — InfinityStar
+### Running the evaluator (InfinityStar)
 
-VBench is intentionally not vendored. Install it separately, generate its inputs, then follow the
-official VBench / VBench-2.0 evaluator instructions on the output directory.
+VBench is not included in this repository. Install it separately, generate its inputs with the
+command below, then run the official VBench or VBench-2.0 evaluator on the output directory.
 
 ```bash
 cd infinitystar

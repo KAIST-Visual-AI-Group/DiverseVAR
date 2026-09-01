@@ -63,8 +63,8 @@ def build_parameters(args, scale_schedule, verbose=False):
     for the keyframe (image, pt=1) and temporal (video, pt>1) parts.
 
     scale_schedule layout (5-second, 28 scales):
-      scales  0..tower_split-1  → keyframe  part (pt=1)  → n_image scales
-      scales  tower_split..n-1  → temporal  part (pt=20) → n_video scales
+      scales  0..tower_split-1  belong to the keyframe part (pt=1),  n_image scales
+      scales  tower_split..n-1  belong to the temporal part (pt=20), n_video scales
 
     Noise injection
     ---------------
@@ -73,7 +73,7 @@ def build_parameters(args, scale_schedule, verbose=False):
       Temporal  : noise_scale_video / noise_stage_video / anneal_func_video
                   (default: no noise)
       Both parts are built independently then concatenated into one flat
-      noise_scales list [img_ns_0, …, img_ns_N-1, vid_ns_0, …, vid_ns_M-1]
+      noise_scales list [img_ns_0, ..., img_ns_N-1, vid_ns_0, ..., vid_ns_M-1]
       so the model receives a single unified schedule with the correct split.
 
     Scale-Travel
@@ -103,7 +103,7 @@ def build_parameters(args, scale_schedule, verbose=False):
     # ------------------------------------------------------------------ #
     noise_type = getattr(args, 'noise_type', 'none')
 
-    # Keyframe noise – explicit args override the legacy aliases
+    # Keyframe noise: explicit args override the legacy aliases
     noise_scale_image     = getattr(args, 'noise_scale_image',     getattr(args, 'noise_scale',     0.0))
     noise_scale_end_image = getattr(args, 'noise_scale_end_image', getattr(args, 'noise_scale_end', 0.0))
     noise_stage_image     = getattr(args, 'noise_stage_image',     getattr(args, 'noise_stage',     0))
@@ -402,9 +402,9 @@ if __name__ == '__main__':
 
     # ---- multi-GPU sharding (optional) ----
     parser.add_argument('--worker_id', type=int, default=0,
-                        help='Worker id for multi-GPU sharding of prompts×seeds')
+                        help='Worker id for multi-GPU sharding of prompt/seed pairs')
     parser.add_argument('--num_workers', type=int, default=1,
-                        help='Total number of workers for sharding prompts×seeds')
+                        help='Total number of workers for sharding prompt/seed pairs')
 
     # ---- model tuning ----
     parser.add_argument('--cfg', type=float, default=34,

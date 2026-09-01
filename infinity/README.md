@@ -2,7 +2,7 @@
 
 This directory adapts [Infinity](https://github.com/FoundationVision/Infinity) with the training-free DiverseVAR inference procedure. The main additions are condition annealing and scale-travel refinement in `infinity/models/infinity.py`, with reusable schedules in `infinity/utils/diverse_var_utils.py`.
 
-DiverseVAR is training-free, so this release ships inference and evaluation only: training and dataset-preparation code are out of scope and are not included here — use the upstream [FoundationVision/Infinity](https://github.com/FoundationVision/Infinity) repository for those.
+This release contains inference and evaluation code only. For training and dataset preparation, use the upstream [Infinity](https://github.com/FoundationVision/Infinity) repository.
 
 ## Setup
 

@@ -20,7 +20,7 @@ Example:
 # --- Workaround: openai/CLIP imports `from pkg_resources import packaging`,
 # which breaks on setuptools>=70 because `pkg_resources.packaging` was removed.
 # Inject the standalone `packaging` module under `pkg_resources` before anything
-# (eval_metrics → DAS_scorer → ImageReward → clip) tries to import it.
+# (eval_metrics imports DAS_scorer, which imports ImageReward and clip) tries to import it.
 try:
     import pkg_resources as _pr
     if not hasattr(_pr, "packaging"):
