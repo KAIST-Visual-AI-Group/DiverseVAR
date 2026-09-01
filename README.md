@@ -16,12 +16,11 @@ KAIST
 
 ## TL;DR
 
-***DiverseVAR** is a two-stage inference framework that improves per-prompt diversity in next-scale visual autoregressive models while preserving generation quality, requiring no retraining or fine-tuning. First, **condition annealing** weakens conditioning at early scales to encourage more diverse generations. Next, **scale-travel** rewinds generation to an earlier scale, enabling diffusion-style refinement to recover visual quality.
+**DiverseVAR** is a two-stage inference framework that improves per-prompt diversity in next-scale visual autoregressive models while preserving generation quality, requiring no retraining or fine-tuning. First, **condition annealing** weakens conditioning at early scales to encourage more diverse generations. Next, **scale-travel** rewinds generation to an earlier scale, enabling diffusion-style refinement to recover visual quality.
 
 </div>
 
 ## Integrations
-
 
 | Integration                      | Modality      | Base model                                                           | Entry point                              | Evaluation                         |
 | -------------------------------- | ------------- | -------------------------------------------------------------------- | ---------------------------------------- | ---------------------------------- |
@@ -29,12 +28,9 @@ KAIST
 | [`switti/`](switti/)             | text-to-image | [Switti](https://github.com/yandex-research/switti)                  | `switti/inference.py`                    | LPIPS-MPD, Vendi, ImageReward, FID |
 | [`infinitystar/`](infinitystar/) | text-to-video | [InfinityStar](https://github.com/FoundationVision/InfinityStar) | `infinitystar/tools/infer_video_480p.py` | VBench / VBench-2.0                |
 
-
 Each integration is self-contained, with its own Conda environment, requirements, checkpoint instructions and README.
 
 ## Environment and Requirements
-
-
 
 ### Tested Environment
 
@@ -42,8 +38,6 @@ Each integration is self-contained, with its own Conda environment, requirements
 - **PyTorch:** 2.5.1 (Infinity, InfinityStar) / 2.4.1 (Switti)
 - **CUDA:** 12.4
 - **GPU:** Tested on NVIDIA RTX A6000 (48 GB).
-
-
 
 ### Installation
 
@@ -58,8 +52,6 @@ pip install -r requirements.txt
 # Infinity and InfinityStar only
 pip install flash-attn==2.7.4.post1 --no-build-isolation
 ```
-
-
 
 # Checkpoint Download
 
@@ -90,10 +82,7 @@ The expected directory contains `infinitystar_8b_480p_weights/`, `infinitystar_v
 
 # Method Controls
 
-
-
 DiverseVAR is configured entirely through inference flags, shared by all three integrations.
-
 
 | Stage               | Flag              | Meaning                                                                                                                                                                                                              |
 | ------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -105,12 +94,9 @@ DiverseVAR is configured entirely through inference flags, shared by all three i
 | Scale-travel        | `--encode_stage`  | Scale $l$ whose feature map is re-encoded                                                                                                                                                                            |
 | Scale-travel        | `--restart_stage` | Coarser scale $m < l$ from which generation resumes                                                                                                                                                                  |
 
-
 To reproduce the **baseline** model instead, set `--noise_type none --noise_scale 0 --repeat_num 1`.
 
 # Inference
-
-
 
 All three integrations read prompts from a text file, one prompt per line. The shared
 [`prompts/`](prompts) directory holds the lists used in this work:
@@ -148,8 +134,6 @@ python inference.py \
   --repeat_num 2 --encode_stage 8 --restart_stage 2
 ```
 
-
-
 ### Switti
 
 ```bash
@@ -163,8 +147,6 @@ python inference.py \
   --anneal_func cosine --noise_rescale 1.0 \
   --repeat_num 2 --encode_stage 8 --restart_stage 3
 ```
-
-
 
 ### InfinityStar
 
@@ -187,11 +169,7 @@ python tools/infer_video_480p.py \
 Outputs are written to a nested directory that records every sampling setting, together with a
 `metadata.json` describing the run.
 
-
-
 # Evaluation
-
-
 
 Metric backends bring their own dependencies and checkpoints, so install only the ones you use.
 No metric checkpoint and no FID reference statistics are included in this repository.
@@ -253,6 +231,13 @@ save path):
 | MS-COCO | [`T2IBenchmark`](https://github.com/boomb0om/text2image-benchmark) (`calculate_fid` + `get_coco_fid_stats`) | Precomputed InceptionV3 statistics over the MS-COCO val2014 30K split (`MS-COCO_val2014_fid_stats.npz`, downloaded and cached on first use) | Generated images are compared directly against those statistics, so nothing has to be prepared manually. The prompts come from the same 30K caption pool as `ms-coco-1000-prompts.txt`. |
 | MJHQ-30K | [`clean-fid`](https://github.com/GaParmar/clean-fid) (`fid.compute_fid(..., mode="clean", dataset_split="custom")`) | Custom statistics that you build once from the 30,000 reference images of [MJHQ-30K](https://huggingface.co/datasets/playgroundai/MJHQ-30K) | The clean-fid resizing path (`mode="clean"`) avoids the resizing artifacts of legacy FID implementations. |
 
+`clean-fid` is listed in the image integrations' `requirements.txt`. `T2IBenchmark` is not on PyPI,
+so install it from source when you need MS-COCO FID:
+
+```bash
+pip install git+https://github.com/boomb0om/text2image-benchmark
+```
+
 Build the MJHQ-30K reference statistics once, under the exact name the evaluator looks up
 (`dataset_name="mjhq-30k"`, `dataset_split="custom"`):
 
@@ -293,8 +278,6 @@ The same code path runs in-process right after generation with `inference.py --e
 `--eval_metrics` selects what is computed, so an interactive run and a post-hoc scoring pass
 produce identical score files.
 
-
-
 ### Running the evaluator (InfinityStar)
 
 VBench is not included in this repository. Install it separately, generate its inputs with the
@@ -313,8 +296,6 @@ python tools/infer_vbench2_480p.py \
   --anneal_func cosine --repeat_num 2 --encode_stage 12 --restart_stage 6
 ```
 
-
-
 # Acknowledgements & Citation
 
 This repository is built on top of the [Infinity](https://github.com/FoundationVision/Infinity),
@@ -329,4 +310,3 @@ corresponding base model alongside our work. If you find our work useful, please
   year={2026}
 }
 ```
-
