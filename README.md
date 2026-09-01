@@ -16,8 +16,7 @@ KAIST
 
 ## TL;DR
 
-***DiverseVAR** is a training-free inference framework for text-conditioned visual autoregressive models. It injects annealed noise into the text embedding (condition annealing) to break the near-deterministic behavior of VAR sampling, then repairs the resulting artifacts with **scale-travel**, a latent refinement step that rewinds intermediate features to a coarser scale via the multi-scale encoder and resumes generation. The result advances the diversity–quality Pareto front on both image and video generation, with no retraining and negligible overhead.*
-
+***DiverseVAR** is a two-stage inference framework that improves per-prompt diversity in next-scale visual autoregressive models while preserving generation quality, requiring no retraining or fine-tuning. First, **condition annealing** weakens conditioning at early scales to encourage more diverse generations. Next, **scale-travel** rewinds generation to an earlier scale, enabling diffusion-style refinement to recover visual quality.
 
 </div>
 
@@ -28,7 +27,7 @@ KAIST
 | -------------------------------- | ------------- | -------------------------------------------------------------------- | ---------------------------------------- | ---------------------------------- |
 | [`infinity/`](infinity/)         | text-to-image | [Infinity](https://github.com/FoundationVision/Infinity)             | `infinity/inference.py`                  | LPIPS-MPD, Vendi, ImageReward, FID |
 | [`switti/`](switti/)             | text-to-image | [Switti](https://github.com/yandex-research/switti)                  | `switti/inference.py`                    | LPIPS-MPD, Vendi, ImageReward, FID |
-| [`infinitystar/`](infinitystar/) | text-to-video | [InfinityStar](https://huggingface.co/FoundationVision/InfinityStar) | `infinitystar/tools/infer_video_480p.py` | VBench / VBench-2.0                |
+| [`infinitystar/`](infinitystar/) | text-to-video | [InfinityStar](https://github.com/FoundationVision/InfinityStar) | `infinitystar/tools/infer_video_480p.py` | VBench / VBench-2.0                |
 
 
 Each integration is self-contained: its own Conda environment, requirements, checkpoints, and README.
@@ -42,7 +41,7 @@ Each integration is self-contained: its own Conda environment, requirements, che
 - **Python:** 3.10 (Infinity, InfinityStar) / 3.11 (Switti)
 - **PyTorch:** 2.5.1 (Infinity, InfinityStar) / 2.4.1 (Switti)
 - **CUDA:** 12.4
-- **GPU:** Tested on NVIDIA RTX A6000 (48 GB). The 8B checkpoints do not fit on a 24 GB GPU without offloading.
+- **GPU:** Tested on NVIDIA RTX A6000 (48 GB).
 
 
 
@@ -187,10 +186,6 @@ python tools/infer_video_480p.py \
 Outputs are written to a nested directory that records every sampling setting, together with a
 `metadata.json` describing the run.
 
-> **Note.** These commands are compact qualitative runs, not scripts that reproduce every paper
-> table. Exact scores depend on checkpoints, prompts, seeds, optional prompt rewriting, metric
-> versions, and GPU kernels.
-
 
 
 # Evaluation
@@ -319,21 +314,11 @@ python tools/infer_vbench2_480p.py \
 
 
 
-# Repository Policy
-
-- No checkpoint, dataset, generated result, or API token is bundled.
-- All paths in the commands above are user-provided or repository-relative.
-- VBench and other large third-party evaluation projects are installed separately.
-- The upstream license is retained in each model directory. Review all upstream model and dataset
-licenses before redistribution.
-
-
-
 # Acknowledgements & Citation
 
 This repository is built on top of the [Infinity](https://github.com/FoundationVision/Infinity),
 [Switti](https://github.com/yandex-research/switti), and
-[InfinityStar](https://huggingface.co/FoundationVision/InfinityStar) codebases. Please cite the
+[InfinityStar](https://github.com/FoundationVision/InfinityStar) codebases. Please cite the
 corresponding base model alongside our work. If you find our work useful, please cite:
 
 ```
