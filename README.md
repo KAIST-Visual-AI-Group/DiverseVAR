@@ -19,6 +19,7 @@ KAIST
 ***DiverseVAR** is a training-free inference framework for text-conditioned visual autoregressive models. It injects annealed noise into the text embedding (condition annealing) to break the near-deterministic behavior of VAR sampling, then repairs the resulting artifacts with **scale-travel**, a latent refinement step that rewinds intermediate features to a coarser scale via the multi-scale encoder and resumes generation. The result advances the diversity–quality Pareto front on both image and video generation, with no retraining and negligible overhead.*
 
 
+</div>
 
 ## Integrations
 
