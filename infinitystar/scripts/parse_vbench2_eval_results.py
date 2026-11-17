@@ -8,6 +8,7 @@ import sys
 import json
 import glob
 import argparse
+import math
 
 # VBench-2.0 category definitions (from VBench-2.0/scripts/constant.py)
 TASK_INFO = [
@@ -27,43 +28,59 @@ HUMAN_FIDELITY_LIST = ["Human Anatomy", "Human Clothes", "Human Identity"]
 PHYSICS_LIST = ["Material", "Mechanics", "Multi-View Consistency", "Thermotics"]
 
 
-def parse_eval_dir(eval_root):
-    """Scan eval_root for dimension subdirs, each with *eval_results.json. Return dict dim_name -> score."""
+def parse_eval_dir(eval_root, allow_partial=False):
+    """Read available dimension scores; never substitute missing results with zero."""
     upload_data = {}
+    missing = []
+    invalid = []
     # Folder names use underscore: Camera_Motion, Human_Anatomy, etc.
     # TASK_INFO uses space: "Camera Motion", "Human Anatomy"
     for task in TASK_INFO:
         folder_name = task.replace(" ", "_")
         subdir = os.path.join(eval_root, folder_name)
         if not os.path.isdir(subdir):
-            upload_data[task] = 0.0
+            missing.append(f"{task}: missing directory {subdir}")
             continue
         pattern = os.path.join(subdir, "*_eval_results.json")
         files = glob.glob(pattern)
         if not files:
-            upload_data[task] = 0.0
+            missing.append(f"{task}: missing result file in {subdir}")
             continue
-        with open(files[0], "r") as f:
-            cur_json = json.load(f)
-        # Key in JSON is folder_name e.g. "Camera_Motion"
-        if folder_name in cur_json:
-            val = cur_json[folder_name]
+        try:
+            with open(files[0], "r") as f:
+                cur_json = json.load(f)
+            if not isinstance(cur_json, dict):
+                raise ValueError("expected a JSON object")
+            # Preserve underscore keys and the space-separated spelling accepted by
+            # the original fallback, without misattributing unrelated dimensions.
+            key = folder_name if folder_name in cur_json else task
+            if key not in cur_json:
+                raise ValueError(f"missing JSON key {folder_name!r} or {task!r}")
+            val = cur_json[key]
+            if isinstance(val, (list, tuple)) and not val:
+                raise ValueError("empty score sequence")
             score = val[0] if isinstance(val, (list, tuple)) else val
-            upload_data[task] = float(score)
-        else:
-            # try any key
-            for k, v in cur_json.items():
-                score = v[0] if isinstance(v, (list, tuple)) else v
-                upload_data[k.replace("_", " ")] = float(score)
-                break
-            else:
-                upload_data[task] = 0.0
+            score = float(score)
+            if not math.isfinite(score):
+                raise ValueError("score must be finite")
+            upload_data[task] = score
+        except (OSError, UnicodeError, ValueError, TypeError) as exc:
+            invalid.append(f"{task}: {files[0]}: {exc}")
+    if invalid:
+        raise ValueError("Invalid evaluation results:\n" + "\n".join(invalid + missing))
+    if missing:
+        message = "Incomplete evaluation results:\n" + "\n".join(missing)
+        if not allow_partial:
+            raise ValueError(message)
+        print(message, file=sys.stderr)
     return upload_data
 
 
 def main():
     parser = argparse.ArgumentParser(description="Parse VBench-2.0 evaluation results")
     parser.add_argument("eval_dir", type=str, help="Path to evaluation output directory")
+    parser.add_argument("--allow-partial", action="store_true",
+                        help="Report available dimensions and coverage; withhold aggregates if incomplete")
     args = parser.parse_args()
 
     eval_root = os.path.abspath(args.eval_dir)
@@ -71,7 +88,18 @@ def main():
         print(f"Not a directory: {eval_root}", file=sys.stderr)
         sys.exit(1)
 
-    upload_data = parse_eval_dir(eval_root)
+    try:
+        upload_data = parse_eval_dir(eval_root, allow_partial=args.allow_partial)
+    except ValueError as exc:
+        parser.exit(1, f"{exc}\n")
+
+    if len(upload_data) != len(TASK_INFO):
+        print(f"Partial evaluation: {len(upload_data)}/{len(TASK_INFO)} dimensions available. "
+              "Complete aggregate scores withheld.")
+        for task in TASK_INFO:
+            if task in upload_data:
+                print(f"  {task}: {upload_data[task]:.4f}")
+        return
 
     def cat_mean(keys):
         return sum(upload_data.get(k, 0) for k in keys) / len(keys)
